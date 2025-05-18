@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>St-John Deacon School</title>
+  <link rel="icon" type="image/png" href="madrast elshmamsa.png">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: #f2efe8; /* خلفية بيج فاتح */
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px; /* مسافة بين اللوجوين والعنوان */
+      margin-bottom: 20px;
+    }
+    header img {
+      width: 80px; /* حجم اللوجو */
+      height: 80px;
+      object-fit: contain;
+    }
+    h1 {
+      color: #5a0202; /* أحمر غامق للعنوان */
+      font-size: 2.5em;
+      margin: 0;
+    }
+    .quote {
+      color: #5a0202; /* نفس لون العنوان */
+      font-size: 1.2em;
+      font-style: italic;
+      text-align: center;
+      margin: 10px 0 20px;
+      max-width: 600px;
+    }
+    .search-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    input {
+      padding: 12px;
+      font-size: 16px;
+      width: 350px; /* أعرض شوية */
+      border: 2px solid #5a0202; /* إطار أحمر */
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    input:focus {
+      border-color: #810e0e; /* أحمر أفتح لما يتركز عليه */
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      background-color: #5a0202; /* أحمر غامق للزر */
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #810e0e; /* أحمر أفتح لما تمرر الماوس */
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      background: rgb(241, 241, 241); /* خلفية رمادي فاتح */
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* ظل خفيف */
+      max-width: 600px;
+      text-align: right;
+      line-height: 1.6;
+    }
+    #result strong {
+      color: #5a0202; /* أحمر غامق للعناوين الفرعية */
+    }
+    .screenshot-note {
+      color: #810e0e; /* أحمر أفتح للتنبيه */
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 15px;
+      text-align: center;
+      border-top: 1px solid #5a0202;
+      padding-top: 10px;
+    }
+    hr {
+      border: 1px solid #5a0202;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="madrast elshmamsa.png" alt="St-John Deacon School Logo 1" />
+    <h1>نتيجة مدرسة الشمامسة للعام ٢٠٢٤-٢٠٢٥م</h1>
+    <img src="st john church logo - gold2.png" alt="St-John Deacon School Logo 2" />
+  </header>
+
+  <p class="quote">"أَيُّهَا الْحَبِيبُ، فِي كُلِّ شَيْءٍ أَرُومُ أَنْ تَكُونَ نَاجِحًا وَصَحِيحًا، كَمَا أَنَّ نَفْسَكَ نَاجِحَةٌ." (3 يو 1: 2)</p>
+
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="اكتب الاسم (كامل) أو رقم التليفون" />
+    <button onclick="search()">بحث</button>
+  </div>
+
+  <div id="result"></div>
+
+  <script>
+    let results = [];
+
+    Promise.all([
+      fetch('https://raw.githubusercontent.com/stJohndeaconschool/grades/refs/heads/main/grades.json')
+        .then(response => {
+          if (!response.ok) throw new Error('فشل تحميل grades.json: ' + response.statusText);
+          return response.json();
+        })
+        .then(data => data.map(item => ({ ...item, source: 'grades' }))),
+      fetch('https://raw.githubusercontent.com/stJohndeaconschool/grades/refs/heads/main/kg.json')
+        .then(response => {
+          if (!response.ok) throw new Error('فشل تحميل kg.json: ' + response.statusText);
+          return response.json();
+        })
+        .then(data => data.map(item => ({ ...item, source: 'kg' })))
+    ])
+      .then(dataArrays => {
+        results = [].concat(...dataArrays);
+        console.log('Loaded data:', results);
+        console.log('Number of records:', results.length);
+        console.log('Sample grades record:', results.find(r => r.source === 'grades'));
+        console.log('Sample kg record:', results.find(r => r.source === 'kg'));
+        if (results.length === 0) {
+          document.getElementById('result').innerText = 'البيانات المحملة فاضية!';
+        }
+      })
+      .catch(err => {
+        document.getElementById('result').innerText = 'فشل تحميل البيانات: ' + err.message;
+        console.error('Error loading data:', err);
+      });
+
+    function search() {
+      const input = document.getElementById('searchInput').value.trim().toLowerCase().replace(/\s+/g, ' ');
+      const resultBox = document.getElementById('result');
+
+      console.log('Search input:', input);
+
+      if (!input) {
+        resultBox.innerText = 'من فضلك أدخل الاسم أو رقم التليفون.';
+        return;
+      }
+
+      const words = input.split(/\s+/);
+      const isPhone = /^\d+$/.test(input);
+
+      if (words.length < 2 && !isPhone) {
+        resultBox.innerText = 'الرجاء كتابة الاسم كاملاً (كلمتين على الأقل) أو رقم التليفون بالكامل.';
+        return;
+      }
+
+      const matchedStudents = results.filter(student => {
+        const name = (student['الاسم'] || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        const phone = String(student['رقم التليفون'] || '').trim();
+        const nameWords = name.split(' ');
+        console.log('Checking student:', name, phone);
+        return (isPhone && phone.includes(input)) || 
+               (!isPhone && words.every(word => nameWords.some(nw => nw.includes(word))));
+      });
+
+      console.log('Matched students:', matchedStudents);
+
+      if (matchedStudents.length > 0) {
+        let html = '';
+        matchedStudents.forEach(student => {
+          if (student.source === 'kg') {
+            html += `
+              <strong>الاسم:</strong> ${student['الاسم']}<br>
+              <strong>رقم التليفون:</strong> ${student['رقم التليفون']}<br>
+              <strong>السن:</strong> ${student['السن']}<br>
+              <strong>النتيجة:</strong> ${student['النتيجة'] || '-'}<br>
+              <hr>
+            `;
+          } else {
+            html += `
+              <strong>الاسم:</strong> ${student['الاسم']}<br>
+              <strong>رقم التليفون:</strong> ${student['رقم التليفون']}<br>
+              <strong>السن:</strong> ${student['السن']}<br>
+              <strong>الجنس:</strong> ${student['الجنس']}<br>
+              <strong>السنة الدراسية:</strong> ${student['السنة الدراسية']}<br>
+              <strong>الرتبة الشماسية:</strong> ${student['الرتبة الشماسية'] || '-'}<br>
+              <strong>عدد مرات حضور الترم الثاني 8:</strong> ${student['عدد مرات حضور الترم الثاني 8']}<br>
+              <strong>درجة الحضور 20:</strong> ${student['درجة الحضور 20']}<br>
+              <strong>درجة الألحان 40:</strong> ${student['درجة الألحان 40']}<br>
+              <strong>درجة القبطي 20:</strong> ${student['درجة القبطي 20']}<br>
+              <strong>درجة الطقس 20:</strong> ${student['درجة الطقس 20']}<br>
+              <strong>نتيجة الترم الأول:</strong> ${student['نتيجة الترم الأول %'] || '-'}%<br>
+              <strong>نتيجة الترم الثاني:</strong> ${student['نتيجة الترم الثاني %'] || '-'}%<br>
+              <strong>نتيجة الترمين:</strong> ${student['نتيجة الترمين %'] || '-'}%<br>
+              <hr>
+            `;
+          }
+        });
+        html += `<p class="screenshot-note">من فضلك إحتفظ بالنتيجة كلقطة شاشة (screenshot).</p>`;
+        resultBox.innerHTML = html;
+      } else {
+        resultBox.innerText = 'لا يوجد طالب بهذا الاسم أو رقم التليفون.';
+      }
+    }
+  </script>
+</body>
+</html>
